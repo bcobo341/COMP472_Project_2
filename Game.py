@@ -257,6 +257,7 @@ class Game:
             trace_file.write("Block Count (b): " + str(self.bloc_num) + "\n")
             trace_file.write("Win Size (s): " + str(self.win_size) + "\n")
             trace_file.write("AI Time (t): " + str(self.t) + "\n")
+            trace_file.write("Bloc Positions: " + str(self.blocs_positions) + "\n")
             trace_file.write("Player X: " + str(player_x) + "\n")
             trace_file.write("Player Y: " + str(player_o) + "\n")
 
