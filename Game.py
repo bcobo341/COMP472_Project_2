@@ -29,13 +29,25 @@ class Game:
         # Player X always plays first
         self.player_turn = 'X'
 
-    def draw_board(self):
-        print()
-        for y in range(0, self.board_size):
-            for x in range(0, self.board_size):
-                print(F'{self.current_state[x][y]}', end="")
+    def draw_board(self, trace=False, trace_file=None):
+        if trace:
             print()
-        print()
+            trace_file.write("\n")
+            for y in range(0, self.board_size):
+                for x in range(0, self.board_size):
+                    trace_file.write(str(self.current_state[x][y]))
+                    print(F'{self.current_state[x][y]}', end="")
+                print()
+                trace_file.write("\n")
+            print()
+            trace_file.write("\n")
+        else:
+            print()
+            for y in range(0, self.board_size):
+                for x in range(0, self.board_size):
+                    print(F'{self.current_state[x][y]}', end="")
+                print()
+            print()
 
     def is_valid(self, px, py):
         if px < 0 or px > (self.board_size - 1) or py < 0 or py > (self.board_size - 1):
@@ -109,16 +121,22 @@ class Game:
         # It's a tie!
         return '.'
 
-    def check_end(self):
+    def check_end(self, trace=False, trace_file=None):
         self.result = self.is_end()
         # Printing the appropriate message if the game has ended
         if self.result != None:
             if self.result == 'X':
                 print('The winner is X!')
+                if (trace):
+                    trace_file.write("The winner is X!")
             elif self.result == 'O':
                 print('The winner is O!')
+                if (trace):
+                    trace_file.write("The winner is O!")
             elif self.result == '.':
                 print("It's a tie!")
+                if (trace):
+                    trace_file.write("It's a tie!")
             self.initialize_game()
         return self.result
 
@@ -228,6 +246,20 @@ class Game:
         return (value, x, y)
 
     def play(self, algo=None, player_x=None, player_o=None):
+        trace = False
+        trace_file = None
+        if player_x == self.AI and player_o == self.AI:
+            trace = True
+            trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(
+                self.win_size) + "t" + str(self.t)
+            trace_file = open(trace_file_name, 'w')
+            trace_file.write("Board Size (n): " + str(self.board_size) + "\n")
+            trace_file.write("Block Count (b): " + str(self.bloc_num) + "\n")
+            trace_file.write("Win Size (s): " + str(self.win_size) + "\n")
+            trace_file.write("AI Time (t): " + str(self.t) + "\n")
+            trace_file.write("Player X: " + str(player_x) + "\n")
+            trace_file.write("Player Y: " + str(player_o) + "\n")
+
         print(player_x)
         print(player_o)
         if algo == None:
@@ -238,7 +270,9 @@ class Game:
             player_o = self.HUMAN
         while True:
             self.draw_board()
-            if self.check_end():
+            if self.check_end(trace, trace_file):
+                trace_file.flush()
+                trace_file.close()
                 return
             start = time.time()
             if algo == self.MINIMAX:
@@ -262,6 +296,9 @@ class Game:
                 print(F'Evaluation time: {round(end - start, 7)}s')
                 print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
             self.current_state[x][y] = self.player_turn
+            if (trace):
+                trace_file.Write("Player: " + self.player_turn + "\n")
+                trace_file.write("Move: (" + str(x) + ", " + str(y) + ")\n")
             self.switch_player()
 
     def heuristic1_eval(self):
