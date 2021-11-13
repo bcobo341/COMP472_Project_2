@@ -5,14 +5,15 @@ import time
 class Game:
 	MINIMAX = 0
 	ALPHABETA = 1
-	HUMAN = 2
-	AI = 3
+	AI = 2
+	HUMAN = 3
 	
-	def __init__(self, recommend = True, board_size = 3, bloc_num=0, blocs_positions=[], win_size = 3):
+	def __init__(self, recommend = True, board_size = 3, bloc_num=0, blocs_positions=[], win_size = 3, t):
 		self.board_size = board_size
 		self.bloc_num=bloc_num
 		self.blocs_positions=blocs_positions
 		self.win_size = win_size if (win_size <= board_size) else board_size
+		self.t = t
 		self.initialize_game()
 		self.recommend = recommend
 		
@@ -28,13 +29,25 @@ class Game:
 		# Player X always plays first
 		self.player_turn = 'X'
 
-	def draw_board(self):
-		print()
-		for y in range(0, self.board_size):
-			for x in range(0, self.board_size):
-				print(F'{self.current_state[x][y]}', end="")
+	def draw_board(self, trace = False, trace_file = None):
+		if trace:
 			print()
-		print()
+			trace_file.write("\n")
+			for y in range(0, self.board_size):
+				for x in range(0, self.board_size):
+					trace_file.write(str(self.current_state[x][y]))
+					print(F'{self.current_state[x][y]}', end="")
+				print()
+				trace_file.write("\n")
+			print()
+			trace_file.write("\n")
+		else:
+			print()
+			for y in range(0, self.board_size):
+				for x in range(0, self.board_size):
+					print(F'{self.current_state[x][y]}', end="")
+				print()
+			print()
 		
 	def is_valid(self, px, py):
 		if px < 0 or px > (self.board_size-1) or py < 0 or py > (self.board_size-1):
@@ -95,7 +108,7 @@ class Game:
 				return 'O'
 				
 		# Diagonal Win
-		diagonal_result = is_diagonal_win(self)
+		diagonal_result = self.is_diagonal_win()
 		if (diagonal_result != '.'):
 			return diagonal_result
 
@@ -108,16 +121,22 @@ class Game:
 		# It's a tie!
 		return '.'
 
-	def check_end(self):
+	def check_end(self, trace=False, trace_file=None):
 		self.result = self.is_end()
 		# Printing the appropriate message if the game has ended
 		if self.result != None:
 			if self.result == 'X':
 				print('The winner is X!')
+				if (trace):
+					trace_file.write("The winner is X!")
 			elif self.result == 'O':
 				print('The winner is O!')
+				if (trace):
+					trace_file.write("The winner is O!")
 			elif self.result == '.':
 				print("It's a tie!")
+				if (trace):
+					trace_file.write("It's a tie!")
 			self.initialize_game()
 		return self.result
 
@@ -227,6 +246,21 @@ class Game:
 		return (value, x, y)
 
 	def play(self,algo=None,player_x=None,player_o=None):
+		trace = False
+		trace_file = None
+		if (player_x == self.AI and player_o == self.AI):
+			trace = True
+			trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(self.win_size) + "t" + str(self.t)
+			trace_file = open(trace_file_name, 'w')
+			trace_file.write("Board Size (n): " + str(self.board_size) + "\n")
+			trace_file.write("Block Count (b): " + str(self.bloc_num) + "\n")
+			trace_file.write("Win Size (s): " + str(self.win_size) + "\n")
+			trace_file.write("AI Time (t): " + str(self.t) + "\n")
+			trace_file.write("Player X: " + str(player_x) + "\n")
+			trace_file.write("Player Y: " + str(player_o) + "\n")
+
+		print(player_x)
+		print(player_o)
 		if algo == None:
 			algo = self.ALPHABETA
 		if player_x == None:
@@ -234,8 +268,10 @@ class Game:
 		if player_o == None:
 			player_o = self.HUMAN
 		while True:
-			self.draw_board()
-			if self.check_end():
+			self.draw_board(trace=trace, trace_file=trace_file)
+			if self.check_end(trace, trace_file):
+				trace_file.flush()
+				trace_file.close()
 				return
 			start = time.time()
 			if algo == self.MINIMAX:
@@ -258,20 +294,71 @@ class Game:
 						print(F'Evaluation time: {round(end - start, 7)}s')
 						print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
 			self.current_state[x][y] = self.player_turn
+			if (trace):
+				trace_file.Write("Player: " + self.player_turn + "\n")
+				trace_file.write("Move: (" + str(x) + ", " + str(y) + ")\n")
 			self.switch_player()
 
-	def heuristic1_eval(self):
-		e1=0
-		temp=0
-		for y in range(0,self.board_size):
-			for x in range(0,self.board_size):
-				if(temp>=0 and self.current_state[y][x]=='X'):
-					temp+=1
-				if(temp<=0 and self.current_state[y][x]=='0'):
-					temp-=1
-				if(self.current_state[y][x]=='$'):
-					break
-			
+
+    # Heuristic 2: more sophisticated and complex to compute
+    def heuristic2_eval(self):
+        self.current_state = [['X','.','X'],
+                              ['.','O','.'],
+                              ['X','.','.']]
+        e2=0
+        tempx=0
+        tempo=0
+        # Vertical
+        for i in range(0, self.board_size):
+            column = [item[i] for item in self.current_state]
+            column_string = "".join(str(x) for x in column)
+            tempx=column_string.count("X")
+            tempo=column_string.count("O")
+            if(tempx>tempo):
+               e2+=pow(10,tempx)
+            if(tempo>tempx):
+                e2-=pow(10,tempo)
+            if(tempx==tempo and tempx!=0):
+                e2+=pow(10,tempx)
+            tempx=0
+            tempo=0
+
+        # Horizontal
+        for i in range(0, self.board_size):
+            row_string = "".join(str(x) for x in self.current_state[i])
+            tempx=row_string.count("X")
+            tempo=row_string.count("O")
+            if(tempx>tempo):
+               e2+=pow(10,tempx)
+            if(tempo>tempx):
+                e2-=pow(10,tempo)
+            if(tempx==tempo and tempx!=0):
+                e2+=pow(10,tempx)
+            tempx=0
+            tempo=0
+                
+        #Diagonal
+        matrix = np.array(self.current_state)
+        diags = [matrix[::-1,:].diagonal(i) for i in range(-matrix.shape[0]+1,matrix.shape[1])]
+        diags.extend(matrix.diagonal(i) for i in range(matrix.shape[1]-1,-matrix.shape[0],-1))
+
+        for y in diags: 
+            row_string = "".join(str(x) for x in y.tolist())
+            tempx=row_string.count("X")
+            tempo=row_string.count("O")
+            if(tempx>tempo and len(y.tolist())>=3):
+               e2+=pow(10,tempx)
+            if(tempo>tempx and len(y.tolist())>=3):
+                e2-=pow(10,tempo)
+            if(tempx==tempo and len(y.tolist())>=3 and tempx!=0):
+                e2+=pow(10,tempx)
+            tempx=0
+            tempo=0
+
+        print(F'e2 = {e2}')
+
+            
+	
 
 def main():
 	n = int(input('enter the size of the board n: '))
@@ -295,9 +382,9 @@ def main():
 		blocPositions.append(f'{bx} {by}')
 
 	#g = Game(recommend=True)
-	g = Game(recommend=True, board_size = n,bloc_num=b, blocs_positions=blocPositions, win_size = s)
+	g = Game(recommend=True, board_size = n,bloc_num=b, blocs_positions=blocPositions, win_size = s, t=t)
 	#g.play(algo=Game.ALPHABETA,player_x=p1,player_o=p2)
-	g.play(algo=Game.ALPHABETA,player_x=Game.AI,player_o=Game.AI)
+	g.play(algo=Game.ALPHABETA,player_x=p1,player_o=p2)
 	#g.play(algo=Game.MINIMAX,player_x=Game.AI,player_o=Game.HUMAN)
 
 if __name__ == "__main__":
