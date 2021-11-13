@@ -1,7 +1,7 @@
 # based on code from https://stackabuse.com/minimax-and-alpha-beta-pruning-in-python
 
 import time
-import numpy as p
+# import numpy as p
 
 class Game:
     MINIMAX = 0
@@ -9,7 +9,7 @@ class Game:
     AI = 2
     HUMAN = 3
     
-    def __init__(self, recommend = True, board_size = 3, bloc_num=0, blocs_positions=[], win_size = 3, t):
+    def __init__(self, recommend = True, board_size = 3, bloc_num=0, blocs_positions=[], win_size = 3, t = 0):
         self.recommend = recommend
         self.board_size = board_size
         self.bloc_num=bloc_num
