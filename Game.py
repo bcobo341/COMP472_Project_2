@@ -57,37 +57,6 @@ class Game:
         else:
             return True
 
-    def is_diagonal_win(self):
-        n = self.board_size
-        s = self.win_size
-        win = False
-        # loop over all squares
-        for x in range(n):
-            for y in range(n):
-                char = self.current_state[x][y]
-                if (char == '$'):
-                    # no point in checking the diagonal from a block
-                    continue
-
-                # check if a large enough positive diagonal can stem from this square
-                if ((n - x >= s) and (n - y >= s)): 
-                    # check positive diagonal on this square
-                    win = True
-                    for i in range(s):
-                        win = win and (self.current_state[x + i][y + i] == char)
-                    if win:
-                        return char
-
-                # check if a large enough positive diagonal can stem from this square	
-                if ((n - x >= s) and (y >= s - 1)):
-                    # check negative diagonal on this square
-                    win = True
-                    for j in range(s):
-                        win = win and (self.current_state[x + j][y - j] == char)
-                    if win:
-                        return char
-        return '.'
-
     def is_end(self):
         # generate the win condition string for X and O
         win_X = 'X'*self.win_size
@@ -109,9 +78,16 @@ class Game:
                 return 'O'
                 
         # Diagonal Win
-        diagonal_result = self.is_diagonal_win()
-        if (diagonal_result != '.'):
-            return diagonal_result
+        matrix = np.array(self.current_state)
+        diags = [matrix[::-1,:].diagonal(i) for i in range(-matrix.shape[0]+1,matrix.shape[1])]
+        diags.extend(matrix.diagonal(i) for i in range(matrix.shape[1]-1,-matrix.shape[0],-1))
+
+        for y in diags: 
+            diag_string = "".join(str(x) for x in y.tolist())
+            if (win_X in diag_string):
+                return 'X'
+            if (win_O in diag_string):
+                return 'O'
 
         # Is whole board full?
         for i in range(0, self.board_size):
@@ -158,6 +134,13 @@ class Game:
             self.player_turn = 'X'
         return self.player_turn
         
+    def calculate_current_max_depth(self):
+        value = 0
+        for i in range(0, self.board_size):
+            row_string = "".join(str(x) for x in self.current_state[i])
+            value+=row_string.count('.')
+        return value
+
     def minimax(self, max=False, current_depth = 0):
         # Maximizing for 'X' and minimizing for 'O'
         # Possible values are:
@@ -172,6 +155,8 @@ class Game:
             value = 2*pow(10, self.win_size)
             max_depth = self.max_depth_X
 
+        if max_depth > self.calculate_current_max_depth():
+            max_depth = self.calculate_current_max_depth()
         x = None
         y = None
         
@@ -285,8 +270,9 @@ class Game:
             self.draw_board(trace=trace, trace_file=trace_file)
             # if the game is over, stop tracing
             if self.check_end(trace, trace_file):
-                # trace_file.flush()
-                trace_file.close()
+                if trace:
+                    trace_file.flush()
+                    trace_file.close()
                 return
             start = time.time()
             if algo == self.MINIMAX:
@@ -358,11 +344,11 @@ class Game:
             row_string = "".join(str(x) for x in y.tolist())
             tempx=row_string.count("X")
             tempo=row_string.count("O")
-            if(tempx>tempo and len(y.tolist())>=3):
+            if(tempx>tempo and len(y.tolist())>=self.win_size):
                e2+=pow(10,tempx)
-            if(tempo>tempx and len(y.tolist())>=3):
+            if(tempo>tempx and len(y.tolist())>=self.win_size):
                 e2-=pow(10,tempo)
-            if(tempx==tempo and len(y.tolist())>=3 and tempx!=0):
+            if(tempx==tempo and len(y.tolist())>=self.win_size and tempx!=0):
                 e2+=pow(10,tempx)
             tempx=0
             tempo=0
