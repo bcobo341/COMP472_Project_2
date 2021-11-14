@@ -177,8 +177,8 @@ class Game:
             return (1, x, y)
         elif result == '.':
             return (0, x, y)
-        for i in range(0, 3):
-            for j in range(0, 3):
+        for i in range(0, self.board_size):
+            for j in range(0, self.board_size):
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
@@ -296,7 +296,7 @@ class Game:
                         print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
             self.current_state[x][y] = self.player_turn
             if (trace):
-                trace_file.Write("Player: " + self.player_turn + "\n")
+                trace_file.write("Player: " + self.player_turn + "\n")
                 trace_file.write("Move: (" + str(x) + ", " + str(y) + ")\n")
             self.switch_player()
 
