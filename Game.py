@@ -274,7 +274,7 @@ class Game:
             self.draw_board(trace=trace, trace_file=trace_file)
             # if the game is over, stop tracing
             if self.check_end(trace, trace_file):
-                trace_file.flush()
+                # trace_file.flush()
                 trace_file.close()
                 return
             start = time.time()
@@ -370,8 +370,8 @@ def main():
     d1 = int(input('Player 1, enter maximum depth d1: '))
     d2 = int(input('Player 2, enter maximum depth d2: '))
 
-    a1 = bool(input('enter either minimax (0) or alphabeta (1) a1: '))
-    a2 = bool(input('enter either minimax (0) or alphabeta (1) a2: '))
+    a1 = bool(input('enter either minimax (0) or alphabeta (1) for game 1: '))
+    a2 = bool(input('enter either minimax (0) or alphabeta (1) for game 2: '))
 
     p1 = int(input('enter either AI (2) or Human (3) p1: '))
     p2 = int(input('enter either AI (2) or Human (3) p2: '))
@@ -383,10 +383,10 @@ def main():
         blocPositions.append(f'{bx} {by}')
 
     g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s)
-    g.play(algo=Game.ALPHABETA, player_x=p1, player_o=p2)
+    g.play(algo=a1, player_x=p1, player_o=p2)
 
     g = Game(recommend=True, board_size = n,bloc_num=b, blocs_positions=blocPositions, win_size = s, t=t)
-    g.play(algo=Game.ALPHABETA,player_x=p1,player_o=p2)
+    g.play(algo=a2,player_x=p1,player_o=p2)
 
 if __name__ == "__main__":
     main()
