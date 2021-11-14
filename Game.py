@@ -1,7 +1,5 @@
-# based on code from https://stackabuse.com/minimax-and-alpha-beta-pruning-in-python
-
 import time
-# import numpy as p
+import numpy as p
 
 class Game:
     MINIMAX = 0
@@ -19,11 +17,10 @@ class Game:
         self.initialize_game()
         
     def initialize_game(self): 
-        #self.current_state = [['.','.','.'],
-        #					  ['.','.','.'],
-        #					  ['.','.','.']]
         # initialize the game board to an nxn square of '.'
         self.current_state = [ ['.']*self.board_size for i in range(self.board_size)]
+
+        # generate blocs if any
         for bloc in self.blocs_positions:
             self.current_state[int(bloc[0])][int(bloc[2])] = '$'
 
@@ -49,7 +46,7 @@ class Game:
                     print(F'{self.current_state[x][y]}', end="")
                 print()
             print()
-        
+
     def is_valid(self, px, py):
         if px < 0 or px > (self.board_size-1) or py < 0 or py > (self.board_size-1):
             return False
@@ -90,6 +87,7 @@ class Game:
         return '.'
 
     def is_end(self):
+        # generate the win condition string for X and O
         win_X = 'X'*self.win_size
         win_O = 'O'*self.win_size
         # Vertical win
@@ -249,6 +247,8 @@ class Game:
     def play(self,algo=None,player_x=None,player_o=None):
         trace = False
         trace_file = None
+        
+        # only trace to file if it's AI vs AI
         if (player_x == self.AI and player_o == self.AI):
             trace = True
             trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(self.win_size) + "t" + str(self.t)
@@ -260,16 +260,19 @@ class Game:
             trace_file.write("Player X: " + str(player_x) + "\n")
             trace_file.write("Player Y: " + str(player_o) + "\n")
 
-        print(player_x)
-        print(player_o)
+        # default algo
         if algo == None:
             algo = self.ALPHABETA
+        # default players if not specified
         if player_x == None:
             player_x = self.HUMAN
         if player_o == None:
             player_o = self.HUMAN
+
+        # main game loop
         while True:
             self.draw_board(trace=trace, trace_file=trace_file)
+            # if the game is over, stop tracing
             if self.check_end(trace, trace_file):
                 trace_file.flush()
                 trace_file.close()
@@ -286,6 +289,7 @@ class Game:
                 else:
                     (m, x, y) = self.alphabeta(max=True)
             end = time.time()
+            # if it's human vs human, show recommendation based on `recommand`
             if (self.player_turn == 'X' and player_x == self.HUMAN) or (self.player_turn == 'O' and player_o == self.HUMAN):
                     if self.recommend:
                         print(F'Evaluation time: {round(end - start, 7)}s')
@@ -299,7 +303,6 @@ class Game:
                 trace_file.write("Player: " + self.player_turn + "\n")
                 trace_file.write("Move: (" + str(x) + ", " + str(y) + ")\n")
             self.switch_player()
-
 
     # Heuristic 2: more sophisticated and complex to compute
     def heuristic2_eval(self):
@@ -358,9 +361,6 @@ class Game:
 
         print(F'e2 = {e2}')
 
-            
-    
-
 def main():
     n = int(input('enter the size of the board n: '))
     b = int(input('enter the number of blocs b: '))
@@ -377,23 +377,16 @@ def main():
     p2 = int(input('enter either AI (2) or Human (3) p2: '))
 
     blocPositions = []
-    for bloc in range(0, b):
+    for _ in range(0, b):
         bx = int(input('enter the bloc position x: '))
         by = int(input('enter the bloc position y: '))
         blocPositions.append(f'{bx} {by}')
 
-    # g = Game(recommend=True)
     g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s)
-    # g.play(algo=Game.ALPHABETA,player_x=p1,player_o=p2)
     g.play(algo=Game.ALPHABETA, player_x=p1, player_o=p2)
 
-
-    #g = Game(recommend=True)
     g = Game(recommend=True, board_size = n,bloc_num=b, blocs_positions=blocPositions, win_size = s, t=t)
-    #g.play(algo=Game.ALPHABETA,player_x=p1,player_o=p2)
     g.play(algo=Game.ALPHABETA,player_x=p1,player_o=p2)
-    #g.play(algo=Game.MINIMAX,player_x=Game.AI,player_o=Game.HUMAN)
-    # g.play(algo=Game.MINIMAX,player_x=Game.AI,player_o=Game.HUMAN)
 
 if __name__ == "__main__":
     main()
