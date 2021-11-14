@@ -18,7 +18,7 @@ class Game:
         self.max_depth_O = max_depth_O
         self.initialize_game()
         
-    def initialize_game(self): 
+    def initialize_game(self):
         # initialize the game board to an nxn square of '.'
         self.current_state = [ ['.']*self.board_size for i in range(self.board_size)]
 
@@ -82,7 +82,7 @@ class Game:
         diags = [matrix[::-1,:].diagonal(i) for i in range(-matrix.shape[0]+1,matrix.shape[1])]
         diags.extend(matrix.diagonal(i) for i in range(matrix.shape[1]-1,-matrix.shape[0],-1))
 
-        for y in diags: 
+        for y in diags:
             diag_string = "".join(str(x) for x in y.tolist())
             if (win_X in diag_string):
                 return 'X'
@@ -141,7 +141,7 @@ class Game:
             value+=row_string.count('.')
         return value
 
-    def minimax(self, max=False, current_depth = 0):
+    def minimax(self, max=False, current_depth=0, currentX=0, currentY=0):
         # Maximizing for 'X' and minimizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
@@ -157,28 +157,28 @@ class Game:
 
         if max_depth > self.calculate_current_max_depth():
             max_depth = self.calculate_current_max_depth()
+
         x = None
         y = None
-        
+
+        result = self.is_end()
+        if result == 'X':
+            return (1*pow(10, self.win_size), x, y)
+        elif result == 'O':
+            return (-1*pow(10, self.win_size), x, y)
+        elif result == '.':
+            return (0, x, y)
         if current_depth == max_depth:
-            result = self.is_end()
-            if result == 'X':
-                return (1*pow(10, self.win_size), x, y)
-            elif result == 'O':
-                return (-1*pow(10, self.win_size), x, y)
-            elif result == '.':
-                return (0, x, y)
-            elif result == None:
-                return (self.heuristic2_eval(), x, y)
+            return (self.heuristic2_eval(), x, y)
+            # return (self.heuristic1_eval(x=currentX, y=currentY), x, y)
 
         # no result, calculate for heuristic value when max_depth is reached
         for i in range(0, self.board_size):
-
             for j in range(0, self.board_size):
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
-                        (v, _, _) = self.minimax(max=False, current_depth=current_depth+1)
+                        (v, _, _) = self.minimax(max=False, current_depth=current_depth+1, currentX=i, currentY=j)
                         if v < value:
                             value = v
                             x = i
@@ -231,7 +231,7 @@ class Game:
                             x = i
                             y = j
                     self.current_state[i][j] = '.'
-                    if max: 
+                    if max:
                         if value >= beta:
                             return (value, x, y)
                         if value > alpha:
@@ -301,6 +301,54 @@ class Game:
                 trace_file.write("Move: (" + str(x) + ", " + str(y) + ")\n")
             self.switch_player()
 
+    # Heuristic 1: simple heuristic, checks adjacent positions against proposed x, y
+    def heuristic1_eval(self, x=0, y=0):
+        e1 = 0
+        char = self.current_state[x][y]
+        if char == 'X': # maximize
+            if x > 0: # left boarder
+                e1 += 1 if self.current_state[x-1][y] == char else 0
+                if y > 0:
+                    e1 += 1 if self.current_state[x-1][y-1] == char else 0
+                if y < self.board_size - 1:
+                    e1 += 1 if self.current_state[x-1][y+1] == char else 0
+
+            if x < self.board_size - 1: #right boarder
+                e1 += 1 if self.current_state[x+1][y] == char else 0
+                if y > 0:
+                    e1 += 1 if self.current_state[x+1][y-1] == char else 0
+                if y < self.board_size - 1:
+                    e1 += 1 if self.current_state[x+1][y+1] == char else 0
+
+            e1 += 1 if self.current_state[x][y] == char else 0
+            if y > 0:
+                e1 += 1 if self.current_state[x][y-1] == char else 0
+            if y < self.board_size - 1:
+                e1 += 1 if self.current_state[x][y+1] == char else 0
+
+            elif char == 'O': # minimize
+                if x > 0: # left boarder
+                    e1 -= 1 if self.current_state[x-1][y] == char else 0
+                    if y > 0:
+                        e1 -= 1 if self.current_state[x-1][y-1] == char else 0
+                    if y < self.board_size - 1:
+                        e1 -= 1 if self.current_state[x-1][y+1] == char else 0
+
+                if x < self.board_size - 1: #right boarder
+                    e1 -= 1 if self.current_state[x+1][y] == char else 0
+                    if y > 0:
+                        e1 -= 1 if self.current_state[x+1][y-1] == char else 0
+                    if y < self.board_size - 1:
+                       e1 -= 1 if self.current_state[x+1][y+1] == char else 0
+
+                e1 -= 1 if self.current_state[x][y] == char else 0
+                if y > 0:
+                    e1 -= 1 if self.current_state[x][y-1] == char else 0
+                if y < self.board_size - 1:
+                    e1 -= 1 if self.current_state[x][y+1] == char else 0
+        return e1
+        
+
     # Heuristic 2: more sophisticated and complex to compute
     def heuristic2_eval(self):
         e2=0
@@ -340,7 +388,7 @@ class Game:
         diags = [matrix[::-1,:].diagonal(i) for i in range(-matrix.shape[0]+1,matrix.shape[1])]
         diags.extend(matrix.diagonal(i) for i in range(matrix.shape[1]-1,-matrix.shape[0],-1))
 
-        for y in diags: 
+        for y in diags:
             row_string = "".join(str(x) for x in y.tolist())
             tempx=row_string.count("X")
             tempo=row_string.count("O")
@@ -352,7 +400,6 @@ class Game:
                 e2+=pow(10,tempx)
             tempx=0
             tempo=0
-        print(F'e2 = {e2}')
         return e2
 
 def main():
