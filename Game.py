@@ -16,6 +16,7 @@ class Game:
         self.t = t
         self.max_depth_X = max_depth_X
         self.max_depth_O = max_depth_O
+        self.all_heuristic_run_time = []
         self.initialize_game()
         
     def initialize_game(self):
@@ -193,14 +194,14 @@ class Game:
                     self.current_state[i][j] = '.'
         return (value, x, y)
 
-    def alphabeta(self, alpha=-2, beta=2, max=False):
+    def alphabeta(self, alpha=-1*np.Inf, beta=np.Inf, max=False, currentX=0, currentY=0):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
         # 0  - a tie
         # -10^win_size  - loss for 'X'
         # We're initially setting it to 2*10^win_size or -2*10^win_size as worse than the worst case:
-
+        max_depth = self.max_depth_O    
         value = -2*pow(10, self.win_size)
         if max:
             value = 2*pow(10, self.win_size)
@@ -219,17 +220,23 @@ class Game:
                     if max:
                         self.current_state[i][j] = 'O'
                         (v, _, _) = self.alphabeta(alpha, beta, max=False)
-                        if v > value:
-                            value = v
-                            x = i
-                            y = j
-                    else:
-                        self.current_state[i][j] = 'X'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=True)
                         if v < value:
                             value = v
                             x = i
                             y = j
+                        beta = min(beta, v)
+                        if beta <= alpha:
+                            break
+                    else:
+                        self.current_state[i][j] = 'X'
+                        (v, _, _) = self.alphabeta(alpha, beta, max=True)
+                        if v > value:
+                            value = v
+                            x = i
+                            y = j
+                        alpha = max(alpha, v)
+                        if beta <= alpha:
+                            break
                     self.current_state[i][j] = '.'
                     if max:
                         if value >= beta:
@@ -271,6 +278,10 @@ class Game:
             # if the game is over, stop tracing
             if self.check_end(trace, trace_file):
                 if trace:
+                    trace_file.write("\n")
+                    trace_file.write("i\tAverage evaluation time: " + str(np.average(self.all_heuristic_run_time)) + "\n")
+                    trace_file.write("ii\tTotal heuristic evaluations: " + str(len(self.all_heuristic_run_time)) + "\n")
+                    # trace_file.write("iii\tEvaluations by depth: " + str(len(self.all_heuristic_run_time)) + "\n")
                     trace_file.flush()
                     trace_file.close()
                 return
@@ -303,6 +314,7 @@ class Game:
 
     # Heuristic 1: simple heuristic, checks adjacent positions against proposed x, y
     def heuristic1_eval(self, x=0, y=0):
+        start_time = time.time()
         e1 = 0
         char = self.current_state[x][y]
         if char == 'X': # maximize
@@ -346,11 +358,15 @@ class Game:
                     e1 -= 1 if self.current_state[x][y-1] == char else 0
                 if y < self.board_size - 1:
                     e1 -= 1 if self.current_state[x][y+1] == char else 0
+        end_time = time.time()
+        execution_time = end_time - start_time
+        self.all_heuristic_run_time.append(execution_time)
         return e1
         
 
     # Heuristic 2: more sophisticated and complex to compute
     def heuristic2_eval(self):
+        start_time = time.time()
         e2=0
         tempx=0
         tempo=0
@@ -400,6 +416,9 @@ class Game:
                 e2+=pow(10,tempx)
             tempx=0
             tempo=0
+        end_time = time.time()
+        execution_time = end_time - start_time
+        self.all_heuristic_run_time.append(execution_time)
         return e2
 
 def main():
