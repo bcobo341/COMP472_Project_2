@@ -231,11 +231,14 @@ class Game:
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             if h == 1:
-                return (self.heuristic2_eval(), x, y)
+                h_value = self.heuristic1_eval(x=currentX, y=currentY)
+                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                return (h_value, x, y)
             elif h == 2:
-                return (self.heuristic1_eval(x=currentX, y=currentY), x, y)
+                h_value = self.heuristic2_eval()
+                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                return (h_value, x, y)
 
         for i in range(0, self.board_size):
             for j in range(0, self.board_size):
@@ -288,11 +291,14 @@ class Game:
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             if h == 1:
-                return (self.heuristic2_eval(), x, y)
+                h_value = self.heuristic1_eval(x=currentX, y=currentY)
+                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                return (h_value, x, y)
             elif h == 2:
-                return (self.heuristic1_eval(x=currentX, y=currentY), x, y)
+                h_value = self.heuristic2_eval()
+                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                return (h_value, x, y)
 
         for i in range(0, self.board_size):
             for j in range(0, self.board_size):
