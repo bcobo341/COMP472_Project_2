@@ -341,21 +341,24 @@ class Game:
 
         # main game loop
         while True:
+            if trace and self.all_heuristic_run_time!=[]:
+                trace_file.write("\n")
+                trace_file.write(
+                    "i\tAverage evaluation time: " + str(np.average(self.all_heuristic_run_time)) + "\n")
+                trace_file.write("ii\tTotal heuristic evaluations: " + str(len(self.all_heuristic_run_time)) + "\n")
+                trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth) + "\n")
+                trace_file.write("iv\tAverage evaluation depth: " + str(
+                    np.average(list(map(int, self.evaluation_count_by_depth.keys())))) + "\n")
+                trace_file.write("iv\tAverage recursion depth: ?" + "\n")
+
             self.draw_board(trace=trace, trace_file=trace_file)
-            # if the game is over, stop tracing
+
+             # if the game is over, stop tracing
             if self.check_end(trace, trace_file):
-                if trace:
-                    trace_file.write("\n")
-                    trace_file.write(
-                        "i\tAverage evaluation time: " + str(np.average(self.all_heuristic_run_time)) + "\n")
-                    trace_file.write("ii\tTotal heuristic evaluations: " + str(len(self.all_heuristic_run_time)) + "\n")
-                    trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth) + "\n")
-                    trace_file.write("iv\tAverage evaluation depth: " + str(
-                        np.average(list(map(int, self.evaluation_count_by_depth.keys())))) + "\n")
-                    trace_file.write("iv\tAverage recursion depth: ?" + "\n")
-                    trace_file.flush()
-                    trace_file.close()
+                trace_file.flush()
+                trace_file.close()
                 return
+        
             start = time.time()
             if algo == self.MINIMAX:
                 if self.player_turn == 'X':
