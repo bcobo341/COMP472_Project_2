@@ -10,8 +10,7 @@ class Game:
     COLUMN = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
               'V', 'W', 'X', 'Y', 'Z']
 
-    def __init__(self, recommend=True, board_size=3, bloc_num=0, blocs_positions=[], win_size=3, t=0, max_depth_X=0,
-                 max_depth_O=0, series=False, winner='.'):
+    def __init__(self, recommend=True, board_size=3, bloc_num=0, blocs_positions=[], win_size=3, t=0, max_depth_X=0, max_depth_O=0, series=False, winner='.'):
         self.recommend = recommend
         self.board_size = board_size
         self.bloc_num = bloc_num
@@ -175,13 +174,14 @@ class Game:
             value += row_string.count('.')
         return value
 
-    def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0):
+    def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0):
         # Maximizing for 'X' and minimizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
         # 0  - a tie
         # -10^win_size  - loss for 'X'
         # We're initially setting it to 2*10^win_size or -2*10^win_size as worse than the worst case:
+        currentTime = time.time()
         max_depth = self.max_depth_O
         value = -2 * pow(10, self.win_size)
         if max:
@@ -203,7 +203,7 @@ class Game:
         elif result == '.':
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
-        if current_depth == max_depth:
+        if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
             try:
                 self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(
                     str(current_depth)) + 1
@@ -220,14 +220,14 @@ class Game:
                     if max:
                         self.current_state[i][j] = 'O'
                         (v, _, _) = self.minimax(max=False, current_depth=current_depth + 1, currentX=i, currentY=j,
-                                                 h=h, startTime=startTime)
+                                                 h=h, startTime=startTime, currentTime = time.time())
                         if v < value:
                             value = v
                             x = i
                             y = j
                     else:
                         self.current_state[i][j] = 'X'
-                        (v, _, _) = self.minimax(max=True, current_depth=current_depth + 1, h=h, startTime=startTime)
+                        (v, _, _) = self.minimax(max=True, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time())
                         if v > value:
                             value = v
                             x = i
@@ -236,7 +236,7 @@ class Game:
         return (value, x, y)
 
     def alphabeta(self, alpha=np.Inf, beta=-1 * np.Inf, max=False, current_depth=0, currentX=0, currentY=0, h=0,
-                  startTime=0):
+                  startTime=0, currentTime = 0):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
@@ -262,7 +262,7 @@ class Game:
         elif result == '.':
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
-        if current_depth == max_depth:
+        if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
             try:
                 self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(
                     str(current_depth)) + 1
@@ -279,7 +279,7 @@ class Game:
                     if max:
                         self.current_state[i][j] = 'O'
                         (v, _, _) = self.alphabeta(alpha, beta, max=False, current_depth=current_depth + 1, h=h,
-                                                   startTime=startTime)
+                                                   startTime=startTime, currentTime = time.time())
                         if v < value:
                             value = v
                             x = i
@@ -287,7 +287,7 @@ class Game:
                     else:
                         self.current_state[i][j] = 'X'
                         (v, _, _) = self.alphabeta(alpha, beta, max=True, current_depth=current_depth + 1, h=h,
-                                                   startTime=startTime)
+                                                   startTime=startTime, currentTime = time.time())
                         if v > value:
                             value = v
                             x = i
