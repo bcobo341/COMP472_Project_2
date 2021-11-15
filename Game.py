@@ -26,6 +26,7 @@ class Game:
         self.evaluation_count_by_depth_per_round = {}
         self.series = series
         self.winner = winner
+        self.turn_count = 0
         self.initialize_game()
 
     def initialize_game(self):
@@ -426,6 +427,7 @@ class Game:
                         "\nPlayer " + self.player_turn + " plays under AI control: " + str(self.COLUMN[x]) + "" + str(
                             y) + "\n")
             self.switch_player()
+            self.turn_count += 1
 
     # Heuristic 1: simple heuristic, checks adjacent positions against proposed x, y
     def heuristic1_eval(self, x=0, y=0):
@@ -610,6 +612,7 @@ def main():
 
         series_all_heuristic_run_times = []
         series_evaluation_count_by_depths = {}
+        turn_counts = []
 
         for i in range(2 * r):
             g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s,
@@ -617,6 +620,7 @@ def main():
             g.play(algo=a1, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
             winner = g.winner
 
+            turn_counts.append(g.turn_count)
             series_all_heuristic_run_times.extend(g.all_heuristic_run_time)
             series_evaluation_count_by_depths = combine_dict(g.evaluation_count_by_depth, series_evaluation_count_by_depths) if bool(series_evaluation_count_by_depths) else g.evaluation_count_by_depth
 
@@ -650,6 +654,7 @@ def main():
         scoreboard.write("iii\tEvaluations by depth: " + str(series_evaluation_count_by_depths) + "\n")
         scoreboard.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, series_evaluation_count_by_depths)))) + "\n")
         scoreboard.write("iv\tAverage recursion depth: ?" + "\n")
+        scoreboard.write("iv\tAverage turn count: " + str(np.average(turn_counts)) +"\n")
         scoreboard.write("\n=============================================\n\n\n")
         scoreboard.flush()
         scoreboard.close()
