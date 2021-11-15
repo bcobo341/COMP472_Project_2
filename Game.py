@@ -501,7 +501,7 @@ class Game:
 
 
 def combine_dict(d1, d2):
-    return {key: d1[key] + d2[key] for key in d1}
+    return {key: d1.get(key, 0) + d2.get(key, 0) for key in d2}
 
 
 def main():
@@ -584,9 +584,7 @@ def main():
             winner = g.winner
 
             series_all_heuristic_run_times.extend(g.all_heuristic_run_time)
-            series_evaluation_count_by_depths = combine_dict(g.evaluation_count_by_depth,
-                                                             series_evaluation_count_by_depths) if bool(
-                series_evaluation_count_by_depths) else g.evaluation_count_by_depth
+            series_evaluation_count_by_depths = combine_dict(g.evaluation_count_by_depth, series_evaluation_count_by_depths) if bool(series_evaluation_count_by_depths) else g.evaluation_count_by_depth
 
             if i % 2 == 0:
                 if winner == 'X':
