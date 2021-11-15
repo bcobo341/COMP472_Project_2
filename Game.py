@@ -183,8 +183,7 @@ class Game:
             value += row_string.count('.')
         return value
 
-    def update_evaluation_stat(self, current_depth = 0, currentTime = 0):
-        execution_time = time.time() - currentTime
+    def update_evaluation_stat(self, current_depth = 0):
         try:
             self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(str(current_depth)) + 1
         except TypeError:
@@ -219,23 +218,23 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+            self.update_evaluation_stat(current_depth=current_depth)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+            self.update_evaluation_stat(current_depth=current_depth)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+            self.update_evaluation_stat(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
             if h == 1:
                 h_value = self.heuristic1_eval(x=currentX, y=currentY)
-                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                self.update_evaluation_stat(current_depth=current_depth)
                 return (h_value, x, y)
             elif h == 2:
                 h_value = self.heuristic2_eval()
-                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                self.update_evaluation_stat(current_depth=current_depth)
                 return (h_value, x, y)
 
         for i in range(0, self.board_size):
@@ -279,23 +278,23 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+            self.update_evaluation_stat(current_depth=current_depth)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+            self.update_evaluation_stat(current_depth=current_depth)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
-            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+            self.update_evaluation_stat(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
             if h == 1:
                 h_value = self.heuristic1_eval(x=currentX, y=currentY)
-                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                self.update_evaluation_stat(current_depth=current_depth)
                 return (h_value, x, y)
             elif h == 2:
                 h_value = self.heuristic2_eval()
-                self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
+                self.update_evaluation_stat(current_depth=current_depth)
                 return (h_value, x, y)
 
         for i in range(0, self.board_size):
