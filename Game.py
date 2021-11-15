@@ -226,8 +226,17 @@ class Game:
         elif result == '.':
             self.update_evaluation_stat(current_depth=current_depth)
             return (0, x, y)
+        if currentTime - startTime >= self.t - 0.15:
+            if h == 1:
+                h_value = self.heuristic1_eval(x=currentX, y=currentY)
+                self.update_evaluation_stat(current_depth=current_depth)
+                return (h_value, x, y)
+            elif h == 2:
+                h_value = self.heuristic2_eval()
+                self.update_evaluation_stat(current_depth=current_depth)
+                return (h_value, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
-        if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
+        if current_depth == max_depth:
             if h == 1:
                 h_value = self.heuristic1_eval(x=currentX, y=currentY)
                 self.update_evaluation_stat(current_depth=current_depth)
@@ -286,8 +295,17 @@ class Game:
         elif result == '.':
             self.update_evaluation_stat(current_depth=current_depth)
             return (0, x, y)
+        if currentTime - startTime >= self.t - 0.15:
+            if h == 1:
+                h_value = self.heuristic1_eval(x=currentX, y=currentY)
+                self.update_evaluation_stat(current_depth=current_depth)
+                return (h_value, x, y)
+            elif h == 2:
+                h_value = self.heuristic2_eval()
+                self.update_evaluation_stat(current_depth=current_depth)
+                return (h_value, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
-        if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
+        if current_depth == max_depth:
             if h == 1:
                 h_value = self.heuristic1_eval(x=currentX, y=currentY)
                 self.update_evaluation_stat(current_depth=current_depth)
@@ -620,8 +638,7 @@ def main():
         turn_counts = []
 
         for i in range(2 * r):
-            g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s,
-                     max_depth_X=d1, max_depth_O=d2, t=t, series=True)
+            g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1, max_depth_O=d2, t=t, series=True)
             g.play(algo=a1, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
             winner = g.winner
 
@@ -665,8 +682,7 @@ def main():
         scoreboard.close()
 
     else:
-        g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1,
-                 max_depth_O=d2, t=t)
+        g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1, max_depth_O=d2, t=t)
         g.play(algo=a1, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
         # g.play(algo=a2,player_x=p1,player_o=p2)
 
