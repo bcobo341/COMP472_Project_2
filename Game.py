@@ -20,7 +20,10 @@ class Game:
         self.max_depth_X = max_depth_X
         self.max_depth_O = max_depth_O
         self.all_heuristic_run_time = []
+        self.heuristic_run_time_per_round = []
+        self.heuristic_evaluation_count_per_round = 0
         self.evaluation_count_by_depth = {}
+        self.evaluation_count_by_depth_per_round = {}
         self.series = series
         self.winner = winner
         self.initialize_game()
@@ -174,6 +177,23 @@ class Game:
             value += row_string.count('.')
         return value
 
+    def update_evaluation_count(self, current_depth = 0):
+        try:
+            self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(
+                str(current_depth)) + 1
+        except TypeError:
+            self.evaluation_count_by_depth[str(current_depth)] = 1
+        try:
+            self.evaluation_count_by_depth_per_round[str(current_depth)] = self.evaluation_count_by_depth_per_round.get(
+                str(current_depth)) + 1
+        except TypeError:
+            self.evaluation_count_by_depth_per_round[str(current_depth)] = 1
+            
+    def update_heuristic_stats(self, time = 0):
+        self.all_heuristic_run_time.append(time)
+        self.heuristic_run_time_per_round.append(time)
+        self.heuristic_evaluation_count_per_round +=1
+
     def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0):
         # Maximizing for 'X' and minimizing for 'O'
         # Possible values are:
@@ -197,18 +217,17 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
+            self.update_evaluation_count(current_depth=current_depth)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
+            self.update_evaluation_count(current_depth=current_depth)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
+            self.update_evaluation_count(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            try:
-                self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(
-                    str(current_depth)) + 1
-            except TypeError:
-                self.evaluation_count_by_depth[str(current_depth)] = 1
+            self.update_evaluation_count(current_depth=current_depth)
             if h == 1:
                 return (self.heuristic2_eval(), x, y)
             elif h == 2:
@@ -256,18 +275,17 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
+            self.update_evaluation_count(current_depth=current_depth)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
+            self.update_evaluation_count(current_depth=current_depth)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
+            self.update_evaluation_count(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            try:
-                self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(
-                    str(current_depth)) + 1
-            except TypeError:
-                self.evaluation_count_by_depth[str(current_depth)] = 1
+            self.update_evaluation_count(current_depth=current_depth)
             if h == 1:
                 return (self.heuristic2_eval(), x, y)
             elif h == 2:
@@ -313,7 +331,7 @@ class Game:
         if (player_x == self.AI and player_o == self.AI):
             trace = True
             trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(
-                self.win_size) + "t" + str(self.t)
+                self.win_size) + "t" + str(self.t) + ".txt"
             trace_file = open(trace_file_name, 'w')
             trace_file.write("n=" + str(self.board_size) + " ")
             trace_file.write("b=" + str(self.bloc_num) + " ")
@@ -341,21 +359,27 @@ class Game:
 
         # main game loop
         while True:
+            if trace and self.all_heuristic_run_time!=[]:
+                trace_file.write("\n")
+                trace_file.write(
+                    "i\tAverage evaluation time: " + str(np.average(self.heuristic_run_time_per_round)) + "\n")
+                self.heuristic_run_time_per_round = []
+                trace_file.write("ii\tHeuristic evaluations: " + str(self.heuristic_evaluation_count_per_round) + "\n")
+                self.heuristic_evaluation_count_per_round = 0
+                trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth_per_round) + "\n")
+                trace_file.write("iv\tAverage evaluation depth: " + str(
+                    np.average(list(map(int, self.evaluation_count_by_depth_per_round.keys())))) + "\n")
+                self.evaluation_count_by_depth_per_round = {}
+                trace_file.write("iv\tAverage recursion depth: ?" + "\n")
+
             self.draw_board(trace=trace, trace_file=trace_file)
-            # if the game is over, stop tracing
+
+             # if the game is over, stop tracing
             if self.check_end(trace, trace_file):
-                if trace:
-                    trace_file.write("\n")
-                    trace_file.write(
-                        "i\tAverage evaluation time: " + str(np.average(self.all_heuristic_run_time)) + "\n")
-                    trace_file.write("ii\tTotal heuristic evaluations: " + str(len(self.all_heuristic_run_time)) + "\n")
-                    trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth) + "\n")
-                    trace_file.write("iv\tAverage evaluation depth: " + str(
-                        np.average(list(map(int, self.evaluation_count_by_depth.keys())))) + "\n")
-                    trace_file.write("iv\tAverage recursion depth: ?" + "\n")
-                    trace_file.flush()
-                    trace_file.close()
+                trace_file.flush()
+                trace_file.close()
                 return
+        
             start = time.time()
             if algo == self.MINIMAX:
                 if self.player_turn == 'X':
@@ -451,7 +475,7 @@ class Game:
                     e1 -= 1 if self.current_state[x][y + 1] == char else 0
         end_time = time.time()
         execution_time = end_time - start_time
-        self.all_heuristic_run_time.append(execution_time)
+        self.update_heuristic_stats(time=execution_time)
         return e1
 
     # Heuristic 2: more sophisticated and complex to compute
@@ -506,7 +530,7 @@ class Game:
             tempo = 0
         end_time = time.time()
         execution_time = end_time - start_time
-        self.all_heuristic_run_time.append(execution_time)
+        self.update_heuristic_stats(time=execution_time)
         return e2
 
 
@@ -624,8 +648,7 @@ def main():
         scoreboard.write("i\tAverage evaluation time: " + str(np.average(series_all_heuristic_run_times)) + "\n")
         scoreboard.write("ii\tTotal heuristic evaluations: " + str(len(series_all_heuristic_run_times)) + "\n")
         scoreboard.write("iii\tEvaluations by depth: " + str(series_evaluation_count_by_depths) + "\n")
-        # scoreboard.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, series_evaluation_count_by_depths)))) + "\n")
-        # scoreboard.write("iv\tAverage evaluation depth: " + str(average_evaluation_depth) + "\n")
+        scoreboard.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, series_evaluation_count_by_depths)))) + "\n")
         scoreboard.write("iv\tAverage recursion depth: ?" + "\n")
         scoreboard.write("\n=============================================\n\n\n")
         scoreboard.flush()
