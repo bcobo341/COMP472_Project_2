@@ -6,8 +6,9 @@ class Game:
     ALPHABETA = 1
     AI = 2
     HUMAN = 3
+    COLUMN = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
     
-    def __init__(self, recommend = True, board_size = 3, bloc_num=0, blocs_positions=[], win_size = 3, t = 0, max_depth_X=0, max_depth_O=0):
+    def __init__(self, recommend = True, board_size = 3, bloc_num=0, blocs_positions=[], win_size = 3, t = 0, max_depth_X=0, max_depth_O=0, series=False, winner='.'):
         self.recommend = recommend
         self.board_size = board_size
         self.bloc_num=bloc_num
@@ -17,6 +18,9 @@ class Game:
         self.max_depth_X = max_depth_X
         self.max_depth_O = max_depth_O
         self.all_heuristic_run_time = []
+        self.evaluation_count_by_depth = {}
+        self.series = series
+        self.winner = winner
         self.initialize_game()
         
     def initialize_game(self):
@@ -31,24 +35,40 @@ class Game:
         self.player_turn = 'X'
 
     def draw_board(self, trace = False, trace_file = None):
+        # if game trace option is on, output it in the .txt file
         if trace:
-            print()
+            space=' '
             trace_file.write("\n")
             for y in range(0, self.board_size):
+                if(y!=0):
+                    space=''
+                trace_file.write(str(space*2)+str(self.COLUMN[y]))
+            trace_file.write("\n")
+            trace_file.write(" +"+str("-"*self.board_size)+"\n")
+            for y in range(0, self.board_size):
                 for x in range(0, self.board_size):
-                    trace_file.write(str(self.current_state[x][y]))
-                    print(F'{self.current_state[x][y]}', end="")
-                print()
+                    if(x==0):
+                        trace_file.write(str(y)+"|"+str(self.current_state[x][y]))
+                    else:
+                        trace_file.write(str(self.current_state[x][y]))
                 trace_file.write("\n")
-            print()
             trace_file.write("\n")
-        else:
-            print()
-            for y in range(0, self.board_size):
-                for x in range(0, self.board_size):
+        space=' '
+        print()
+        for y in range(0, self.board_size):
+            if(y!=0):
+                space=''
+            print(F'{space*2}{self.COLUMN[y]}', end="")
+        print()
+        print(" +"+"-"*self.board_size)
+        for y in range(0, self.board_size):
+            for x in range(0, self.board_size):
+                if(x==0):
+                    print(F'{y}|{self.current_state[x][y]}', end="")
+                else:
                     print(F'{self.current_state[x][y]}', end="")
-                print()
             print()
+        print()
 
     def is_valid(self, px, py):
         if px < 0 or px > (self.board_size-1) or py < 0 or py > (self.board_size-1):
@@ -104,14 +124,17 @@ class Game:
         # Printing the appropriate message if the game has ended
         if self.result != None:
             if self.result == 'X':
+                self.winner = 'X'
                 print('The winner is X!')
                 if (trace):
                     trace_file.write("The winner is X!")
             elif self.result == 'O':
+                self.winner = 'O'
                 print('The winner is O!')
                 if (trace):
                     trace_file.write("The winner is O!")
             elif self.result == '.':
+                self.winner = '.'
                 print("It's a tie!")
                 if (trace):
                     trace_file.write("It's a tie!")
@@ -120,9 +143,15 @@ class Game:
 
     def input_move(self):
         while True:
-            print(F'Player {self.player_turn}, enter your move:')
-            px = int(input('enter the x coordinate: '))
-            py = int(input('enter the y coordinate: '))
+            p = str(input(F'Player {self.player_turn}, enter your move:'))
+            move=p.split(' ')
+            px=-1
+            py=int(move[1])
+            for y in range(0, len(self.COLUMN)):
+                if(self.COLUMN[y]==move[0]):
+                    px=y
+                    break
+
             if self.is_valid(px, py):
                 return (px,py)
             else:
@@ -136,13 +165,14 @@ class Game:
         return self.player_turn
         
     def calculate_current_max_depth(self):
+        # to calculate the max_depth the tree currently has (how many moves are available)
         value = 0
         for i in range(0, self.board_size):
             row_string = "".join(str(x) for x in self.current_state[i])
             value+=row_string.count('.')
         return value
 
-    def minimax(self, max=False, current_depth=0, currentX=0, currentY=0):
+    def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h = 0, startTime=0):
         # Maximizing for 'X' and minimizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
@@ -151,11 +181,11 @@ class Game:
         # We're initially setting it to 2*10^win_size or -2*10^win_size as worse than the worst case:
         max_depth = self.max_depth_O
         value = -2*pow(10, self.win_size)
-
         if max:
             value = 2*pow(10, self.win_size)
             max_depth = self.max_depth_X
 
+        # if max_depth is bigger than current max moves available, then set max_depth to current max moves available
         if max_depth > self.calculate_current_max_depth():
             max_depth = self.calculate_current_max_depth()
 
@@ -169,24 +199,30 @@ class Game:
             return (-1*pow(10, self.win_size), x, y)
         elif result == '.':
             return (0, x, y)
+        # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth:
-            return (self.heuristic2_eval(), x, y)
-            # return (self.heuristic1_eval(x=currentX, y=currentY), x, y)
+            try:
+                self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(str(current_depth)) + 1
+            except TypeError:
+                self.evaluation_count_by_depth[str(current_depth)] = 1
+            if h == 1:
+                return (self.heuristic2_eval(), x, y)
+            elif h == 2:
+                return (self.heuristic1_eval(x=currentX, y=currentY), x, y) 
 
-        # no result, calculate for heuristic value when max_depth is reached
         for i in range(0, self.board_size):
             for j in range(0, self.board_size):
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
-                        (v, _, _) = self.minimax(max=False, current_depth=current_depth+1, currentX=i, currentY=j)
+                        (v, _, _) = self.minimax(max=False, current_depth=current_depth+1, currentX=i, currentY=j, h=h, startTime=startTime)
                         if v < value:
                             value = v
                             x = i
                             y = j
                     else:
                         self.current_state[i][j] = 'X'
-                        (v, _, _) = self.minimax(max=True, current_depth=current_depth+1)
+                        (v, _, _) = self.minimax(max=True, current_depth=current_depth+1, h=h, startTime=startTime)
                         if v > value:
                             value = v
                             x = i
@@ -194,7 +230,7 @@ class Game:
                     self.current_state[i][j] = '.'
         return (value, x, y)
 
-    def alphabeta(self, alpha=-1*np.Inf, beta=np.Inf, max=False, currentX=0, currentY=0):
+    def alphabeta(self, alpha=np.Inf, beta=-1*np.Inf, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
@@ -207,64 +243,75 @@ class Game:
             value = 2*pow(10, self.win_size)
         x = None
         y = None
+
+        # if max_depth is bigger than current max moves available, then set max_depth to current max moves available
+        if max_depth > self.calculate_current_max_depth():
+            max_depth = self.calculate_current_max_depth()
+
         result = self.is_end()
         if result == 'X':
-            return (-1, x, y)
+            return (1*pow(10, self.win_size), x, y)
         elif result == 'O':
-            return (1, x, y)
+            return (-1*pow(10, self.win_size), x, y)
         elif result == '.':
             return (0, x, y)
+        # if result is not any of the ending condition, calculate the heuristic value and return
+        if current_depth == max_depth:
+            try:
+                self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(str(current_depth)) + 1
+            except TypeError:
+                self.evaluation_count_by_depth[str(current_depth)] = 1
+            if h == 1:
+                return (self.heuristic2_eval(), x, y)
+            elif h == 2:
+                return (self.heuristic1_eval(x=currentX, y=currentY), x, y) 
+
         for i in range(0, self.board_size):
             for j in range(0, self.board_size):
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=False)
+                        (v, _, _) = self.alphabeta(alpha, beta, max=False, current_depth=current_depth+1, h=h, startTime=startTime)
                         if v < value:
                             value = v
                             x = i
                             y = j
-                        beta = min(beta, v)
-                        if beta <= alpha:
-                            break
                     else:
                         self.current_state[i][j] = 'X'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=True)
+                        (v, _, _) = self.alphabeta(alpha, beta, max=True, current_depth=current_depth+1, h=h, startTime=startTime)
                         if v > value:
                             value = v
                             x = i
                             y = j
-                        alpha = max(alpha, v)
-                        if beta <= alpha:
-                            break
                     self.current_state[i][j] = '.'
                     if max:
-                        if value >= beta:
+                        if value <= beta:
                             return (value, x, y)
-                        if value > alpha:
+                        if value < alpha:
                             alpha = value
                     else:
-                        if value <= alpha:
+                        if value >= alpha:
                             return (value, x, y)
-                        if value < beta:
+                        if value > beta:
                             beta = value
         return (value, x, y)
 
-    def play(self,algo=None,player_x=None,player_o=None):
+    def play(self,algo=None,player_x=None,player_o=None, heuristic_x=0, heuristic_o=0):
         trace = False
         trace_file = None
-        
+
         # only trace to file if it's AI vs AI
         if (player_x == self.AI and player_o == self.AI):
             trace = True
             trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(self.win_size) + "t" + str(self.t)
             trace_file = open(trace_file_name, 'w')
-            trace_file.write("Board Size (n): " + str(self.board_size) + "\n")
-            trace_file.write("Block Count (b): " + str(self.bloc_num) + "\n")
-            trace_file.write("Win Size (s): " + str(self.win_size) + "\n")
-            trace_file.write("AI Time (t): " + str(self.t) + "\n")
-            trace_file.write("Player X: " + str(player_x) + "\n")
-            trace_file.write("Player Y: " + str(player_o) + "\n")
+            trace_file.write("n=" + str(self.board_size) + " ")
+            trace_file.write("b=" + str(self.bloc_num) + " ")
+            trace_file.write("s=" + str(self.win_size) + " ")
+            trace_file.write("t=" + str(self.t) + "\n")
+            trace_file.write("blocs=" + str(self.blocs_positions) + "\n")
+            trace_file.write("Player 1: AI "+ " \n")
+            trace_file.write("Player 2: AI "+ " \n")
 
         # default players if not specified
         if player_x == None:
@@ -281,35 +328,51 @@ class Game:
                     trace_file.write("\n")
                     trace_file.write("i\tAverage evaluation time: " + str(np.average(self.all_heuristic_run_time)) + "\n")
                     trace_file.write("ii\tTotal heuristic evaluations: " + str(len(self.all_heuristic_run_time)) + "\n")
-                    # trace_file.write("iii\tEvaluations by depth: " + str(len(self.all_heuristic_run_time)) + "\n")
+                    trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth) + "\n")
+                    trace_file.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, self.evaluation_count_by_depth.keys())))) + "\n")
+                    trace_file.write("iv\tAverage recursion depth: ?" + "\n")
                     trace_file.flush()
                     trace_file.close()
                 return
             start = time.time()
             if algo == self.MINIMAX:
                 if self.player_turn == 'X':
-                    (_, x, y) = self.minimax(max=False)
+                    triplet = self.minimax(max=False, h=heuristic_x, startTime = time.time())
+                    if triplet == None:
+                        continue
+                    (_, x, y) = triplet
                 else:
-                    (_, x, y) = self.minimax(max=True)
+                    triplet = self.minimax(max=True, h=heuristic_o, startTime = time.time())
+                    if triplet == None:
+                        continue
+                    (_, x, y) = triplet
             else: # algo == self.ALPHABETA
                 if self.player_turn == 'X':
-                    (m, x, y) = self.alphabeta(max=False)
+                    triplet = self.alphabeta(max=False, h=heuristic_x, startTime = time.time())
+                    if triplet == None:
+                        continue
+                    (m, x, y) = triplet
                 else:
-                    (m, x, y) = self.alphabeta(max=True)
+                    triplet = self.alphabeta(max=True, h=heuristic_o, startTime = time.time())
+                    if triplet == None:
+                        continue
+                    (m, x, y) = triplet
             end = time.time()
             # if it's human vs human, show recommendation based on `recommand`
             if (self.player_turn == 'X' and player_x == self.HUMAN) or (self.player_turn == 'O' and player_o == self.HUMAN):
                     if self.recommend:
                         print(F'Evaluation time: {round(end - start, 7)}s')
-                        print(F'Recommended move: x = {x}, y = {y}')
+                        print(F'Recommended move: {self.COLUMN[x]}{y}')
                     (x,y) = self.input_move()
             if (self.player_turn == 'X' and player_x == self.AI) or (self.player_turn == 'O' and player_o == self.AI):
                         print(F'Evaluation time: {round(end - start, 7)}s')
-                        print(F'Player {self.player_turn} under AI control plays: x = {x}, y = {y}')
+                        print(F'Player {self.player_turn} under AI control plays: {self.COLUMN[x]}{y}')
             self.current_state[x][y] = self.player_turn
             if (trace):
-                trace_file.write("Player: " + self.player_turn + "\n")
-                trace_file.write("Move: (" + str(x) + ", " + str(y) + ")\n")
+                if (self.player_turn == 'X' and player_x == self.HUMAN) or (self.player_turn == 'O' and player_o == self.HUMAN):
+                    trace_file.write("\nPlayer "+ self.player_turn + " plays: "  + str(self.COLUMN[x]) + "" + str(y) + "\n")
+                if (self.player_turn == 'X' and player_x == self.AI) or (self.player_turn == 'O' and player_o == self.AI):
+                    trace_file.write("\nPlayer "+ self.player_turn + " plays under AI control: "  + str(self.COLUMN[x]) + "" + str(y) + "\n")
             self.switch_player()
 
     # Heuristic 1: simple heuristic, checks adjacent positions against proposed x, y
@@ -362,7 +425,6 @@ class Game:
         execution_time = end_time - start_time
         self.all_heuristic_run_time.append(execution_time)
         return e1
-        
 
     # Heuristic 2: more sophisticated and complex to compute
     def heuristic2_eval(self):
@@ -384,7 +446,6 @@ class Game:
                 e2+=pow(10,tempx)
             tempx=0
             tempo=0
-
         # Horizontal
         for i in range(0, self.board_size):
             row_string = "".join(str(x) for x in self.current_state[i])
@@ -398,7 +459,6 @@ class Game:
                 e2+=pow(10,tempx)
             tempx=0
             tempo=0
-                
         #Diagonal
         matrix = np.array(self.current_state)
         diags = [matrix[::-1,:].diagonal(i) for i in range(-matrix.shape[0]+1,matrix.shape[1])]
@@ -421,7 +481,17 @@ class Game:
         self.all_heuristic_run_time.append(execution_time)
         return e2
 
+def combine_dict(d1, d2):
+    return {key: d1[key] + d2[key] for key in d1}
+
 def main():
+    series = input('Run multiple games in series? (Y)es / (N)o: ')
+    series = (series == 'Y' or series == 'y')
+    r = 1
+
+    if (series):
+        r = int(input('enter the number of rounds r: '))
+
     n = int(input('enter the size of the board n: '))
     b = int(input('enter the number of blocs b: '))
     s = int(input('enter the winning line-up size s: '))
@@ -430,11 +500,28 @@ def main():
     d1 = int(input('Player 1, enter maximum depth d1: '))
     d2 = int(input('Player 2, enter maximum depth d2: '))
 
-    a1 = int(input('enter either minimax (0) or alphabeta (1) for game 1: '))
-    a2 = int(input('enter either minimax (0) or alphabeta (1) for game 2: '))
+    a1 = int(input('enter either minimax (0) or alphabeta (1) for player 1: '))
+    a2 = int(input('enter either minimax (0) or alphabeta (1) for player 2: '))
 
-    p1 = int(input('Player 1, enter either AI (2) or Human (3) p1: '))
-    p2 = int(input('Player 2, enter either AI (2) or Human (3) p2: '))
+    if (not series):
+        p1 = int(input('Player 1, enter either AI (2) or Human (3) p1: '))
+        p2 = int(input('Player 2, enter either AI (2) or Human (3) p2: '))
+    else:
+        print("\nIn series mode, both players are AI.")
+        p1 = 2
+        p2 = 2
+
+    h1 = 0
+    h2 = 0
+    if (not series):
+        if p1 == 2:
+            h1 = int(input('Player 1, enter either heuristic (1) or (2) h1: '))
+        if p2 == 2:
+            h2 = int(input('Player 2, enter either heuristic (1) or (2) h2: '))
+    else:
+        h1 = 1
+        h2 = 2
+        print("\nIn series mode, one player is set to use each heuristic.")
 
     blocPositions = []
     for _ in range(0, b):
@@ -442,9 +529,81 @@ def main():
         by = int(input('enter the bloc position y: '))
         blocPositions.append(f'{bx} {by}')
 
-    g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1, max_depth_O=d2, t=t)
-    g.play(algo=a1, player_x=p1, player_o=p2)
-    # g.play(algo=a2,player_x=p1,player_o=p2)
+    if (series):
+        scoreboard = open("scoreboard.txt" , "a")
+        scoreboard.write("New Series:\n")
+        scoreboard.write("=============================================\n")
+        scoreboard.write("Board Size (n): " + str(n) + "\n")
+        scoreboard.write("Block Count (b): " + str(b) + "\n")
+        scoreboard.write("Win Size (s): " + str(s) + "\n")
+        scoreboard.write("AI Time (t): " + str(t) + "\n")
+        scoreboard.write("Bloc Positions: " + str(blocPositions) + "\n")
+        scoreboard.write("\nPlayer 1 info: \n")
+        scoreboard.write("max depth:\t" + str(d1) + "\n")
+        algoName = "Minimax" if a1 == 0 else "Alpha Beta"
+        scoreboard.write("algorithm:\t" + str(algoName) + "\n")
+        scoreboard.write("heuristic:\te" + str(h1) + "\n")
+        scoreboard.write("\nPlayer 2 info: \n")
+        scoreboard.write("max depth:\t" + str(d2) + "\n")
+        algoName = "Minimax" if a2 == 0 else "Alpha Beta"
+        scoreboard.write("algorithm:\t" + str(algoName) + "\n")
+        scoreboard.write("heuristic:\te" + str(h2) + "\n")
+        scoreboard.flush()
+        scoreboard.close()
+
+        e1_wins = 0
+        e2_wins = 0
+
+        series_all_heuristic_run_times = []
+        series_evaluation_count_by_depths = {}
+
+        for i in range(2*r):
+            g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1, max_depth_O=d2, t=t, series=True)
+            g.play(algo=a1, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
+            winner = g.winner
+
+            series_all_heuristic_run_times.extend(g.all_heuristic_run_time)
+            series_evaluation_count_by_depths = combine_dict(g.evaluation_count_by_depth, series_evaluation_count_by_depths) if bool(series_evaluation_count_by_depths) else g.evaluation_count_by_depth
+
+            if i%2 == 0:
+                if winner == 'X':
+                    e1_wins += 1
+                else:
+                    e2_wins += 1
+            else:
+                if winner == 'O':
+                    e1_wins += 1
+                else:
+                    e2_wins += 1
+
+            # swap players
+            a_temp = a1
+            a1 = a2
+            a2 = a_temp
+            h_temp = h1
+            h1 = h2
+            h2 = h_temp
+        
+        scoreboard = open("scoreboard.txt" , "a")
+        scoreboard.write("\n\nGames played: " + str(2*r) + "\n")
+        scoreboard.write("e1 win percentage: " + str(100 * e1_wins / (2*r)) + "%\n")
+        scoreboard.write("e2 win percentage: " + str(100 * e2_wins / (2*r)) + "%\n")
+        scoreboard.write("\n")
+
+        scoreboard.write("i\tAverage evaluation time: " + str(np.average(series_all_heuristic_run_times)) + "\n")
+        scoreboard.write("ii\tTotal heuristic evaluations: " + str(len(series_all_heuristic_run_times)) + "\n")
+        scoreboard.write("iii\tEvaluations by depth: " + str(series_evaluation_count_by_depths) + "\n")
+        # scoreboard.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, series_evaluation_count_by_depths)))) + "\n")
+        # scoreboard.write("iv\tAverage evaluation depth: " + str(average_evaluation_depth) + "\n")
+        scoreboard.write("iv\tAverage recursion depth: ?" + "\n")
+        scoreboard.write("\n=============================================\n\n\n")
+        scoreboard.flush()
+        scoreboard.close() 
+
+    else:
+        g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1, max_depth_O=d2, t=t)
+        g.play(algo=a1, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
+        # g.play(algo=a2,player_x=p1,player_o=p2)
 
 if __name__ == "__main__":
     main()
