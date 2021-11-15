@@ -338,7 +338,8 @@ class Game:
         if (player_x == self.AI and player_o == self.AI):
             trace = True
             trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(self.win_size) + "t" + str(self.t) + ".txt"
-            trace_file = open(trace_file_name, 'w')
+            trace_file = open(trace_file_name, 'a')
+            trace_file.write("\n==================================================================================\n\n")
             trace_file.write("n=" + str(self.board_size) + " ")
             trace_file.write("b=" + str(self.bloc_num) + " ")
             trace_file.write("s=" + str(self.win_size) + " ")
@@ -367,7 +368,7 @@ class Game:
         while True:
             if trace and self.all_evaluation_run_time!=[]:
                 trace_file.write("\n")
-                trace_file.write("i\tAverage evaluation time: " + str(np.average(self.all_evaluation_run_time_per_round)) + "\n")
+                trace_file.write("i\tAverage evaluation time(s): " + str(np.average(self.all_evaluation_run_time_per_round)) + "\n")
                 trace_file.write("ii\tHeuristic evaluations: " + str(self.evaluation_count_per_round) + "\n")
                 trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth_per_round) + "\n")
                 trace_file.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, self.evaluation_count_by_depth_per_round.keys())))) + "\n")
@@ -379,6 +380,12 @@ class Game:
 
              # if the game is over, stop tracing
             if self.check_end(trace, trace_file):
+                trace_file.write("\n")
+                trace_file.write("i\tAverage evaluation time(s): " + str(np.average(self.all_evaluation_run_time)) + "\n")
+                trace_file.write("ii\tHeuristic evaluations: " + str(self.evaluation_count) + "\n")
+                trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth) + "\n")
+                trace_file.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, self.evaluation_count_by_depth.keys())))) + "\n")
+                trace_file.write("vi\tTotal moves: " + str(self.turn_count) + "\n")
                 trace_file.flush()
                 trace_file.close()
                 return
@@ -645,11 +652,10 @@ def main():
         scoreboard.write("e2 win percentage: " + str(100 * e2_wins / (2 * r)) + "%\n")
         scoreboard.write("\n")
 
-        scoreboard.write("i\tAverage evaluation time: " + str(np.average(series_all_heuristic_run_times)) + "\n")
+        scoreboard.write("i\tAverage evaluation time(s): " + str(np.average(series_all_heuristic_run_times)) + "\n")
         scoreboard.write("ii\tTotal heuristic evaluations: " + str(series_heuristic_evaluation_count) + "\n")
         scoreboard.write("iii\tEvaluations by depth: " + str(series_evaluation_count_by_depths) + "\n")
         scoreboard.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, series_evaluation_count_by_depths)))) + "\n")
-        scoreboard.write("iv\tAverage recursion depth: ?" + "\n")
         scoreboard.write("iv\tAverage turn count: " + str(np.average(turn_counts)) +"\n")
         scoreboard.write("\n=============================================\n\n\n")
         scoreboard.flush()
