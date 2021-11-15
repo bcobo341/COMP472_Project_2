@@ -24,9 +24,10 @@ class Game:
         self.winner = winner
 
         # stats
-        self.all_heuristic_run_time = []
-        self.heuristic_run_time_per_round = []
-        self.heuristic_evaluation_count_per_round = 0
+        self.all_evaluation_run_time = []
+        self.all_evaluation_run_time_per_round = []
+        self.evaluation_count = 0
+        self.evaluation_count_per_round = 0
         self.evaluation_count_by_depth = {}
         self.evaluation_count_by_depth_per_round = {}
 
@@ -182,7 +183,8 @@ class Game:
             value += row_string.count('.')
         return value
 
-    def update_evaluation_count(self, current_depth = 0):
+    def update_evaluation_stat(self, current_depth = 0, currentTime = 0):
+        execution_time = time.time() - currentTime
         try:
             self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(str(current_depth)) + 1
         except TypeError:
@@ -191,11 +193,10 @@ class Game:
             self.evaluation_count_by_depth_per_round[str(current_depth)] = self.evaluation_count_by_depth_per_round.get(str(current_depth)) + 1
         except TypeError:
             self.evaluation_count_by_depth_per_round[str(current_depth)] = 1
-            
-    def update_heuristic_stats(self, time = 0):
-        self.all_heuristic_run_time.append(time)
-        self.heuristic_run_time_per_round.append(time)
-        self.heuristic_evaluation_count_per_round +=1
+        self.evaluation_count_per_round +=1
+        self.evaluation_count += 1
+        self.all_evaluation_run_time.append(execution_time)
+        self.all_evaluation_run_time_per_round.append(execution_time)
 
     def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0):
         # Maximizing for 'X' and minimizing for 'O'
@@ -220,17 +221,17 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             if h == 1:
                 return (self.heuristic2_eval(), x, y)
             elif h == 2:
@@ -277,17 +278,17 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            self.update_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_stat(current_depth=current_depth, currentTime = currentTime)
             if h == 1:
                 return (self.heuristic2_eval(), x, y)
             elif h == 2:
@@ -358,14 +359,14 @@ class Game:
 
         # main game loop
         while True:
-            if trace and self.all_heuristic_run_time!=[]:
+            if trace and self.all_evaluation_run_time!=[]:
                 trace_file.write("\n")
-                trace_file.write("i\tAverage evaluation time: " + str(np.average(self.heuristic_run_time_per_round)) + "\n")
-                trace_file.write("ii\tHeuristic evaluations: " + str(self.heuristic_evaluation_count_per_round) + "\n")
+                trace_file.write("i\tAverage evaluation time: " + str(np.average(self.all_evaluation_run_time_per_round)) + "\n")
+                trace_file.write("ii\tHeuristic evaluations: " + str(self.evaluation_count_per_round) + "\n")
                 trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth_per_round) + "\n")
                 trace_file.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, self.evaluation_count_by_depth_per_round.keys())))) + "\n")
-                self.heuristic_evaluation_count_per_round = 0
-                self.heuristic_run_time_per_round = []
+                self.evaluation_count_per_round = 0
+                self.all_evaluation_run_time_per_round = []
                 self.evaluation_count_by_depth_per_round = {}
 
             self.draw_board(trace=trace, trace_file=trace_file)
@@ -426,7 +427,6 @@ class Game:
 
     # Heuristic 1: simple heuristic, checks adjacent positions against proposed x, y
     def heuristic1_eval(self, x=0, y=0):
-        start_time = time.time()
         e1 = 0
         char = self.current_state[x][y]
         if char == 'X':  # maximize
@@ -470,14 +470,10 @@ class Game:
                     e1 -= 1 if self.current_state[x][y - 1] == char else 0
                 if y < self.board_size - 1:
                     e1 -= 1 if self.current_state[x][y + 1] == char else 0
-        end_time = time.time()
-        execution_time = end_time - start_time
-        self.update_heuristic_stats(time=execution_time)
         return e1
 
     # Heuristic 2: more sophisticated and complex to compute
     def heuristic2_eval(self):
-        start_time = time.time()
         e2 = 0
         tempx = 0
         tempo = 0
@@ -525,9 +521,6 @@ class Game:
                 e2 += pow(10, tempx)
             tempx = 0
             tempo = 0
-        end_time = time.time()
-        execution_time = end_time - start_time
-        self.update_heuristic_stats(time=execution_time)
         return e2
 
 
@@ -607,6 +600,7 @@ def main():
 
         series_all_heuristic_run_times = []
         series_evaluation_count_by_depths = {}
+        series_heuristic_evaluation_count = 0
         turn_counts = []
 
         for i in range(2 * r):
@@ -616,7 +610,8 @@ def main():
             winner = g.winner
 
             turn_counts.append(g.turn_count)
-            series_all_heuristic_run_times.extend(g.all_heuristic_run_time)
+            series_heuristic_evaluation_count += g.evaluation_count
+            series_all_heuristic_run_times.extend(g.all_evaluation_run_time)
             series_evaluation_count_by_depths = combine_dict(g.evaluation_count_by_depth, series_evaluation_count_by_depths) if bool(series_evaluation_count_by_depths) else g.evaluation_count_by_depth
 
             if i % 2 == 0:
@@ -645,7 +640,7 @@ def main():
         scoreboard.write("\n")
 
         scoreboard.write("i\tAverage evaluation time: " + str(np.average(series_all_heuristic_run_times)) + "\n")
-        scoreboard.write("ii\tTotal heuristic evaluations: " + str(len(series_all_heuristic_run_times)) + "\n")
+        scoreboard.write("ii\tTotal heuristic evaluations: " + str(series_heuristic_evaluation_count) + "\n")
         scoreboard.write("iii\tEvaluations by depth: " + str(series_evaluation_count_by_depths) + "\n")
         scoreboard.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, series_evaluation_count_by_depths)))) + "\n")
         scoreboard.write("iv\tAverage recursion depth: ?" + "\n")
