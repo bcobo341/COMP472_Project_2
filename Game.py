@@ -195,7 +195,7 @@ class Game:
         self.evaluation_count_per_round +=1
         self.evaluation_count += 1
 
-    def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0):
+    def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0, max_depth = -1):
         # Maximizing for 'X' and minimizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
@@ -203,15 +203,16 @@ class Game:
         # -10^win_size  - loss for 'X'
         # We're initially setting it to 2*10^win_size or -2*10^win_size as worse than the worst case:
         currentTime = time.time()
-        max_depth = self.max_depth_O
+        if max_depth == -1:
+            max_depth = self.max_depth_O
+            if max:
+                max_depth = self.max_depth_X
+            if max_depth > self.calculate_current_max_depth():
+                max_depth = self.calculate_current_max_depth()
+        
         value = -2 * pow(10, self.win_size)
         if max:
             value = 2 * pow(10, self.win_size)
-            max_depth = self.max_depth_X
-
-        # if max_depth is bigger than current max moves available, then set max_depth to current max moves available
-        if max_depth > self.calculate_current_max_depth():
-            max_depth = self.calculate_current_max_depth()
 
         x = None
         y = None
@@ -251,14 +252,14 @@ class Game:
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
-                        (v, _, _) = self.minimax(max=False, current_depth=current_depth + 1, currentX=i, currentY=j, h=h, startTime=startTime, currentTime = time.time())
+                        (v, _, _) = self.minimax(max=False, current_depth=current_depth + 1, currentX=i, currentY=j, h=h, startTime=startTime, currentTime = time.time(), max_depth=max_depth)
                         if v < value:
                             value = v
                             x = i
                             y = j
                     else:
                         self.current_state[i][j] = 'X'
-                        (v, _, _) = self.minimax(max=True, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time())
+                        (v, _, _) = self.minimax(max=True, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time(), max_depth=max_depth)
                         if v > value:
                             value = v
                             x = i
@@ -266,24 +267,25 @@ class Game:
                     self.current_state[i][j] = '.'
         return (value, x, y)
 
-    def alphabeta(self, alpha=np.Inf, beta=-1 * np.Inf, max=False, current_depth=0, currentX=0, currentY=0, h=0,
-                  startTime=0, currentTime = 0):
+    def alphabeta(self, alpha=np.Inf, beta=-1 * np.Inf, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0, max_depth = -1):
         # Minimizing for 'X' and maximizing for 'O'
         # Possible values are:
         # 10^win_size - win for 'X'
         # 0  - a tie
         # -10^win_size  - loss for 'X'
         # We're initially setting it to 2*10^win_size or -2*10^win_size as worse than the worst case:
-        max_depth = self.max_depth_O
+        if max_depth == -1:
+            max_depth = self.max_depth_O
+            if max:
+                max_depth = self.max_depth_X
+            if max_depth > self.calculate_current_max_depth():
+                max_depth = self.calculate_current_max_depth()
+
         value = -2 * pow(10, self.win_size)
         if max:
             value = 2 * pow(10, self.win_size)
         x = None
         y = None
-
-        # if max_depth is bigger than current max moves available, then set max_depth to current max moves available
-        if max_depth > self.calculate_current_max_depth():
-            max_depth = self.calculate_current_max_depth()
 
         result = self.is_end()
         if result == 'X':
@@ -320,14 +322,14 @@ class Game:
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=False, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time())
+                        (v, _, _) = self.alphabeta(alpha, beta, max=False, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time(), max_depth=max_depth)
                         if v < value:
                             value = v
                             x = i
                             y = j
                     else:
                         self.current_state[i][j] = 'X'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=True, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time())
+                        (v, _, _) = self.alphabeta(alpha, beta, max=True, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time(), max_depth=max_depth)
                         if v > value:
                             value = v
                             x = i
@@ -345,7 +347,7 @@ class Game:
                             beta = value
         return (value, x, y)
 
-    def play(self, algo=None, player_x=None, player_o=None, heuristic_x=0, heuristic_o=0):
+    def play(self, algo1=None, algo2=None, player_x=None, player_o=None, heuristic_x=0, heuristic_o=0):
         trace = False
         trace_file = None
 
@@ -362,13 +364,13 @@ class Game:
             trace_file.write("blocs=" + str(self.blocs_positions) + "\n")
             trace_file.write("Player 1: AI ")
             trace_file.write("d=" + str(self.max_depth_X))
-            if (algo==self.MINIMAX):
+            if (algo1==self.MINIMAX):
                 trace_file.write(" a=False e1(regular)\n")
             else:
                 trace_file.write(" a=True e1(regular)\n")
             trace_file.write("Player 2: AI ")
             trace_file.write("d=" + str(self.max_depth_O))
-            if (algo==self.MINIMAX):
+            if (algo2==self.MINIMAX):
                 trace_file.write(" a=False e2(defensive)\n")
             else:
                 trace_file.write(" a=True e2(defensive)\n")
@@ -406,23 +408,23 @@ class Game:
                 return
         
             start = time.time()
-            if algo == self.MINIMAX:
-                if self.player_turn == 'X':
+            if self.player_turn == 'X':
+                if algo1 == self.MINIMAX:
                     triplet = self.minimax(max=False, h=heuristic_x, startTime=time.time())
                     if triplet == None:
                         continue
                     (_, x, y) = triplet
                 else:
-                    triplet = self.minimax(max=True, h=heuristic_o, startTime=time.time())
-                    if triplet == None:
-                        continue
-                    (_, x, y) = triplet
-            else:  # algo == self.ALPHABETA
-                if self.player_turn == 'X':
                     triplet = self.alphabeta(max=False, h=heuristic_x, startTime=time.time())
                     if triplet == None:
                         continue
                     (m, x, y) = triplet
+            else:
+                if algo2 == self.MINIMAX:
+                    triplet = self.minimax(max=True, h=heuristic_o, startTime=time.time())
+                    if triplet == None:
+                        continue
+                    (_, x, y) = triplet
                 else:
                     triplet = self.alphabeta(max=True, h=heuristic_o, startTime=time.time())
                     if triplet == None:
@@ -639,7 +641,7 @@ def main():
 
         for i in range(2 * r):
             g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1, max_depth_O=d2, t=t, series=True)
-            g.play(algo=a1, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
+            g.play(algo1=a1, algo2=a2, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
             winner = g.winner
 
             turn_counts.append(g.turn_count)
@@ -683,9 +685,7 @@ def main():
 
     else:
         g = Game(recommend=True, board_size=n, bloc_num=b, blocs_positions=blocPositions, win_size=s, max_depth_X=d1, max_depth_O=d2, t=t)
-        g.play(algo=a1, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
-        # g.play(algo=a2,player_x=p1,player_o=p2)
-
+        g.play(algo1=a1, algo2=a2, player_x=p1, player_o=p2, heuristic_x=h1, heuristic_o=h2)
 
 if __name__ == "__main__":
     main()
