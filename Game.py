@@ -177,7 +177,7 @@ class Game:
             value += row_string.count('.')
         return value
 
-    def increment_evaluation_count(self, current_depth = 0):
+    def update_evaluation_count(self, current_depth = 0):
         try:
             self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(
                 str(current_depth)) + 1
@@ -188,6 +188,11 @@ class Game:
                 str(current_depth)) + 1
         except TypeError:
             self.evaluation_count_by_depth_per_round[str(current_depth)] = 1
+            
+    def update_heuristic_stats(self, time = 0):
+        self.all_heuristic_run_time.append(time)
+        self.heuristic_run_time_per_round.append(time)
+        self.heuristic_evaluation_count_per_round +=1
 
     def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0):
         # Maximizing for 'X' and minimizing for 'O'
@@ -212,17 +217,17 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             if h == 1:
                 return (self.heuristic2_eval(), x, y)
             elif h == 2:
@@ -270,17 +275,17 @@ class Game:
 
         result = self.is_end()
         if result == 'X':
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             return (1 * pow(10, self.win_size), x, y)
         elif result == 'O':
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             return (-1 * pow(10, self.win_size), x, y)
         elif result == '.':
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
         if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
-            self.increment_evaluation_count(current_depth=current_depth)
+            self.update_evaluation_count(current_depth=current_depth)
             if h == 1:
                 return (self.heuristic2_eval(), x, y)
             elif h == 2:
@@ -470,9 +475,7 @@ class Game:
                     e1 -= 1 if self.current_state[x][y + 1] == char else 0
         end_time = time.time()
         execution_time = end_time - start_time
-        self.all_heuristic_run_time.append(execution_time)
-        self.heuristic_run_time_per_round.append(execution_time)
-        self.heuristic_evaluation_count_per_round +=1
+        self.update_heuristic_stats(time=execution_time)
         return e1
 
     # Heuristic 2: more sophisticated and complex to compute
@@ -527,9 +530,7 @@ class Game:
             tempo = 0
         end_time = time.time()
         execution_time = end_time - start_time
-        self.all_heuristic_run_time.append(execution_time)
-        self.heuristic_run_time_per_round.append(execution_time)
-        self.heuristic_evaluation_count_per_round +=1
+        self.update_heuristic_stats(time=execution_time)
         return e2
 
 
