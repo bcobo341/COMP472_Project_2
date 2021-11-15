@@ -7,9 +7,15 @@
 - Install `numpy` using `pip install numpy`
 - Run `python3 Game.py` on the project directory 
 
-##### Pypy3
+##### Windows Pypy3
 - Install `chocolatey`
 - Install `pypy3` using `chocolatey install pypy3`
+- Install `numpy` using `pypy3 -m pip install numpy`
+- Run `pypy3 Game.py`
+
+##### Mac Pypy3
+- Install `homebrew`
+- Install `pypy3` using `brew install pypy3`
 - Install `numpy` using `pypy3 -m pip install numpy`
 - Run `pypy3 Game.py`
 
