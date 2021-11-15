@@ -12,6 +12,7 @@ class Game:
 
     def __init__(self, recommend=True, board_size=3, bloc_num=0, blocs_positions=[], win_size=3, t=0, max_depth_X=0, max_depth_O=0, series=False, winner='.'):
         self.recommend = recommend
+        # game parameters
         self.board_size = board_size
         self.bloc_num = bloc_num
         self.blocs_positions = blocs_positions
@@ -19,13 +20,16 @@ class Game:
         self.t = t
         self.max_depth_X = max_depth_X
         self.max_depth_O = max_depth_O
+        self.series = series
+        self.winner = winner
+
+        # stats
         self.all_heuristic_run_time = []
         self.heuristic_run_time_per_round = []
         self.heuristic_evaluation_count_per_round = 0
         self.evaluation_count_by_depth = {}
         self.evaluation_count_by_depth_per_round = {}
-        self.series = series
-        self.winner = winner
+        
         self.initialize_game()
 
     def initialize_game(self):
@@ -179,13 +183,11 @@ class Game:
 
     def update_evaluation_count(self, current_depth = 0):
         try:
-            self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(
-                str(current_depth)) + 1
+            self.evaluation_count_by_depth[str(current_depth)] = self.evaluation_count_by_depth.get(str(current_depth)) + 1
         except TypeError:
             self.evaluation_count_by_depth[str(current_depth)] = 1
         try:
-            self.evaluation_count_by_depth_per_round[str(current_depth)] = self.evaluation_count_by_depth_per_round.get(
-                str(current_depth)) + 1
+            self.evaluation_count_by_depth_per_round[str(current_depth)] = self.evaluation_count_by_depth_per_round.get(str(current_depth)) + 1
         except TypeError:
             self.evaluation_count_by_depth_per_round[str(current_depth)] = 1
             
@@ -238,8 +240,7 @@ class Game:
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
-                        (v, _, _) = self.minimax(max=False, current_depth=current_depth + 1, currentX=i, currentY=j,
-                                                 h=h, startTime=startTime, currentTime = time.time())
+                        (v, _, _) = self.minimax(max=False, current_depth=current_depth + 1, currentX=i, currentY=j, h=h, startTime=startTime, currentTime = time.time())
                         if v < value:
                             value = v
                             x = i
@@ -296,16 +297,14 @@ class Game:
                 if self.current_state[i][j] == '.':
                     if max:
                         self.current_state[i][j] = 'O'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=False, current_depth=current_depth + 1, h=h,
-                                                   startTime=startTime, currentTime = time.time())
+                        (v, _, _) = self.alphabeta(alpha, beta, max=False, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time())
                         if v < value:
                             value = v
                             x = i
                             y = j
                     else:
                         self.current_state[i][j] = 'X'
-                        (v, _, _) = self.alphabeta(alpha, beta, max=True, current_depth=current_depth + 1, h=h,
-                                                   startTime=startTime, currentTime = time.time())
+                        (v, _, _) = self.alphabeta(alpha, beta, max=True, current_depth=current_depth + 1, h=h, startTime=startTime, currentTime = time.time())
                         if v > value:
                             value = v
                             x = i
@@ -330,8 +329,7 @@ class Game:
         # only trace to file if it's AI vs AI
         if (player_x == self.AI and player_o == self.AI):
             trace = True
-            trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(
-                self.win_size) + "t" + str(self.t) + ".txt"
+            trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(self.win_size) + "t" + str(self.t) + ".txt"
             trace_file = open(trace_file_name, 'w')
             trace_file.write("n=" + str(self.board_size) + " ")
             trace_file.write("b=" + str(self.bloc_num) + " ")
@@ -361,16 +359,13 @@ class Game:
         while True:
             if trace and self.all_heuristic_run_time!=[]:
                 trace_file.write("\n")
-                trace_file.write(
-                    "i\tAverage evaluation time: " + str(np.average(self.heuristic_run_time_per_round)) + "\n")
-                self.heuristic_run_time_per_round = []
+                trace_file.write("i\tAverage evaluation time: " + str(np.average(self.heuristic_run_time_per_round)) + "\n")
                 trace_file.write("ii\tHeuristic evaluations: " + str(self.heuristic_evaluation_count_per_round) + "\n")
-                self.heuristic_evaluation_count_per_round = 0
                 trace_file.write("iii\tEvaluations by depth: " + str(self.evaluation_count_by_depth_per_round) + "\n")
-                trace_file.write("iv\tAverage evaluation depth: " + str(
-                    np.average(list(map(int, self.evaluation_count_by_depth_per_round.keys())))) + "\n")
+                trace_file.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, self.evaluation_count_by_depth_per_round.keys())))) + "\n")
+                self.heuristic_evaluation_count_per_round = 0
+                self.heuristic_run_time_per_round = []
                 self.evaluation_count_by_depth_per_round = {}
-                trace_file.write("iv\tAverage recursion depth: ?" + "\n")
 
             self.draw_board(trace=trace, trace_file=trace_file)
 
@@ -649,7 +644,6 @@ def main():
         scoreboard.write("ii\tTotal heuristic evaluations: " + str(len(series_all_heuristic_run_times)) + "\n")
         scoreboard.write("iii\tEvaluations by depth: " + str(series_evaluation_count_by_depths) + "\n")
         scoreboard.write("iv\tAverage evaluation depth: " + str(np.average(list(map(int, series_evaluation_count_by_depths)))) + "\n")
-        scoreboard.write("iv\tAverage recursion depth: ?" + "\n")
         scoreboard.write("\n=============================================\n\n\n")
         scoreboard.flush()
         scoreboard.close()
