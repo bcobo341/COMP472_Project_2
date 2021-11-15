@@ -320,8 +320,18 @@ class Game:
             trace_file.write("s=" + str(self.win_size) + " ")
             trace_file.write("t=" + str(self.t) + "\n")
             trace_file.write("blocs=" + str(self.blocs_positions) + "\n")
-            trace_file.write("Player 1: AI " + " \n")
-            trace_file.write("Player 2: AI " + " \n")
+            trace_file.write("Player 1: AI ")
+            trace_file.write("d=" + str(self.max_depth_X))
+            if (algo==self.MINIMAX):
+                trace_file.write(" a=False e1(regular)\n")
+            else:
+                trace_file.write(" a=True e1(regular)\n")
+            trace_file.write("Player 2: AI ")
+            trace_file.write("d=" + str(self.max_depth_O))
+            if (algo==self.MINIMAX):
+                trace_file.write(" a=False e2(defensive)\n")
+            else:
+                trace_file.write(" a=True e2(defensive)\n")
 
         # default players if not specified
         if player_x == None:
