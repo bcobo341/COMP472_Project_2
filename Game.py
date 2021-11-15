@@ -195,8 +195,6 @@ class Game:
             self.evaluation_count_by_depth_per_round[str(current_depth)] = 1
         self.evaluation_count_per_round +=1
         self.evaluation_count += 1
-        self.all_evaluation_run_time.append(execution_time)
-        self.all_evaluation_run_time_per_round.append(execution_time)
 
     def minimax(self, max=False, current_depth=0, currentX=0, currentY=0, h=0, startTime=0, currentTime = 0):
         # Maximizing for 'X' and minimizing for 'O'
@@ -418,11 +416,17 @@ class Game:
             if (self.player_turn == 'X' and player_x == self.HUMAN) or (
                     self.player_turn == 'O' and player_o == self.HUMAN):
                 if self.recommend:
-                    print(F'Evaluation time: {round(end - start, 7)}s')
+                    execution_time = round(end - start, 7)
+                    self.all_evaluation_run_time.append(execution_time)
+                    self.all_evaluation_run_time_per_round.append(execution_time)
+                    print(F'Evaluation time: {execution_time}s')
                     print(F'Recommended move: {self.COLUMN[x]}{y}')
                 (x, y) = self.input_move()
             if (self.player_turn == 'X' and player_x == self.AI) or (self.player_turn == 'O' and player_o == self.AI):
-                print(F'Evaluation time: {round(end - start, 7)}s')
+                execution_time = round(end - start, 7)
+                self.all_evaluation_run_time.append(execution_time)
+                self.all_evaluation_run_time_per_round.append(execution_time)
+                print(F'Evaluation time: {execution_time}s')
                 print(F'Player {self.player_turn} under AI control plays: {self.COLUMN[x]}{y}')
             self.current_state[x][y] = self.player_turn
             if (trace):
