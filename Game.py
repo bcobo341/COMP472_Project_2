@@ -204,9 +204,9 @@ class Game:
         # We're initially setting it to 2*10^win_size or -2*10^win_size as worse than the worst case:
         currentTime = time.time()
         if max_depth == -1:
-            max_depth = self.max_depth_O
+            max_depth = self.max_depth_X
             if max:
-                max_depth = self.max_depth_X
+                max_depth = self.max_depth_O
             if max_depth > self.calculate_current_max_depth():
                 max_depth = self.calculate_current_max_depth()
         
@@ -275,9 +275,9 @@ class Game:
         # -10^win_size  - loss for 'X'
         # We're initially setting it to 2*10^win_size or -2*10^win_size as worse than the worst case:
         if max_depth == -1:
-            max_depth = self.max_depth_O
+            max_depth = self.max_depth_X
             if max:
-                max_depth = self.max_depth_X
+                max_depth = self.max_depth_O
             if max_depth > self.calculate_current_max_depth():
                 max_depth = self.calculate_current_max_depth()
 
