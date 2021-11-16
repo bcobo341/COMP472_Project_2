@@ -228,16 +228,7 @@ class Game:
             self.update_evaluation_stat(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
-        if current_depth == max_depth:
-            if h == 1:
-                h_value = self.heuristic1_eval(x=currentX, y=currentY)
-                self.update_evaluation_stat(current_depth=current_depth)
-                return (h_value, x, y)
-            elif h == 2:
-                h_value = self.heuristic2_eval()
-                self.update_evaluation_stat(current_depth=current_depth)
-                return (h_value, x, y)
-        if currentTime - startTime >= self.t - 0.15:
+        if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
             if h == 1:
                 h_value = self.heuristic1_eval(x=currentX, y=currentY)
                 self.update_evaluation_stat(current_depth=current_depth)
@@ -298,16 +289,7 @@ class Game:
             self.update_evaluation_stat(current_depth=current_depth)
             return (0, x, y)
         # if result is not any of the ending condition, calculate the heuristic value and return
-        if current_depth == max_depth:
-            if h == 1:
-                h_value = self.heuristic1_eval(x=currentX, y=currentY)
-                self.update_evaluation_stat(current_depth=current_depth)
-                return (h_value, x, y)
-            elif h == 2:
-                h_value = self.heuristic2_eval()
-                self.update_evaluation_stat(current_depth=current_depth)
-                return (h_value, x, y)
-        if currentTime - startTime >= self.t - 0.15:
+        if current_depth == max_depth or currentTime - startTime >= self.t - 0.15:
             if h == 1:
                 h_value = self.heuristic1_eval(x=currentX, y=currentY)
                 self.update_evaluation_stat(current_depth=current_depth)
