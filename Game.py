@@ -354,7 +354,7 @@ class Game:
         # only trace to file if it's AI vs AI
         if (player_x == self.AI and player_o == self.AI):
             trace = True
-            trace_file_name = "gameTrace-n" + str(self.board_size) + "b" + str(self.bloc_num) + "s" + str(self.win_size) + "t" + str(self.t) + ".txt"
+            trace_file_name = "gameTrace-" + str(self.board_size) + str(self.bloc_num) + str(self.win_size) + str(self.t) + ".txt"
             trace_file = open(trace_file_name, 'a')
             trace_file.write("\n==================================================================================\n\n")
             trace_file.write("n=" + str(self.board_size) + " ")
